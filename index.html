@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+        <script src="js/three.js"></script>
+        <script src="js/controls/PointerLockControls.js"></script>
+        <script src="js/controls/TrackballControls.js"></script>
+        <script src="js/libs/dat.gui.min.js"></script>
+        <script src="js/libs/tween.js"></script>
+        <script src="js/libs/inflate.min.js"></script>
+        <script src="js/loaders/OBJLoader.js"></script>
+        <script src="js/loaders/MTLLoader.js"></script>
+        <script src="js/loaders/FBXLoader.js"></script>
+        <script src="js/misc/Water.js"></script>
+        <script src="js/misc/Sky.js"></script>
+        <script src="js/shaders/CopyShader.js"></script>
+        <script src="js/shaders/FXAAShader.js"></script>
+        <script src="js/postprocessing/EffectComposer.js"></script>
+        <script src="js/postprocessing/RenderPass.js"></script>
+        <script src="js/postprocessing/ShaderPass.js"></script>
+        <script src="js/postprocessing/OutlinePass.js"></script>
+
+        <link rel="stylesheet" href="css/style.css">
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+        <link rel="icon" href="favicon.ico" type="image/x-icon">
+        <title>Bảo tàng số</title>
+    </head>
+
+    <body>
+        <div id="instruction">
+            Nhấn <span id="key">&nbsp;E&nbsp;</span> để <span id="action"></span>
+        </div>
+
+        <video controls loop autoplay id="video" style="display: none">
+            <source src="assets/videos/video.mp4" type="video/mp4">
+        </video>
+        <script src="js/script.js"></script>
+    </body>
+
+</html>

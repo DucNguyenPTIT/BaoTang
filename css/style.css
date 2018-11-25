@@ -1,0 +1,41 @@
+* {
+    box-sizing: border-box;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    margin: auto;
+    border-radius: 3px;
+}
+
+#instruction {
+    width: 40%;
+    padding: 20px;
+    font-size: 20px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.4);
+    text-align: center;
+    z-index: 100;
+    position: absolute;
+    bottom: 180px;
+    left: 410px;
+}
+
+div,
+span {
+    border-radius: 5px;
+}
+
+#key {
+    padding: 10px;
+    background-color: aliceblue;
+    font-weight: bold;
+    color: black;
+    width: 50px;
+    height: 50px;
+}
+
+#action {
+    color: yellow;
+}
