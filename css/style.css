@@ -9,8 +9,7 @@ canvas {
     border-radius: 3px;
 }
 
-#instruction {
-    width: 40%;
+.instruction {
     padding: 20px;
     font-size: 20px;
     color: white;
@@ -19,15 +18,31 @@ canvas {
     z-index: 100;
     position: absolute;
     bottom: 180px;
+
+}
+
+#object {
+    width: 40%;
+    padding: 20px;
     left: 410px;
+}
+
+#light-obj {
+    width: 30%;
+    right: 10px;
+    bottom: 10px;
+}
+
+#light-obj p:nth-child(2) {
+    margin-top: 50px;
 }
 
 div,
 span {
-    border-radius: 5px;
+    border-radius: 3px;
 }
 
-#key {
+.key {
     padding: 10px;
     background-color: aliceblue;
     font-weight: bold;

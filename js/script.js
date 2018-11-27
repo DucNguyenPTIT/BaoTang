@@ -1,26 +1,31 @@
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-camera.focus = 100;
 var renderer = new THREE.WebGLRenderer({
     antialias: true
 });
 var pointerControls = new THREE.PointerLockControls(camera);
 var oldControl = pointerControls;
-var trackballControls;
 var ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
 var hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 1);
 var direcLight = new THREE.DirectionalLight(0xffffff, 0.8);
-var spotLight = new THREE.SpotLight(0xccff99, 1.8, 1000, Math.PI / 6, 0.25, 2);
 
-spotLight.position.set(0, 80, 100);
-spotLight.rotateX(Math.PI / 6);
+var POINTLIGHT = new THREE.PointLight(0xccff99, 1.8, 1000, 2);
+var DIRECTLIGHT = new THREE.DirectionalLight(0xccff99, 1.8);
+var SPOTLIGHT = new THREE.SpotLight(0xccff99, 1.8, 1000, Math.PI / 6, 0.25, 2);
+
+SPOTLIGHT.position.set(0, 80, 0);
+SPOTLIGHT.castShadow = true;
+DIRECTLIGHT.position.set(0, 80, 0);
+DIRECTLIGHT.castShadow = true;
+POINTLIGHT.position.set(0, 80, 0);
+
 direcLight.position.set(-500, 5000, 2000);
 direcLight.castShadow = true;
 direcLight.shadow.mapSize.set(2048, 2048);
 
 scene.add(ambientLight);
 scene.add(direcLight);
-scene.add(spotLight);
+scene.add(SPOTLIGHT);
 
 var raycaster = new THREE.Raycaster();
 var moveUp = false;
@@ -34,15 +39,16 @@ const MASS = 100;
 const HEIGHT = 35;
 const AXIS_HELPER = new THREE.AxisHelper(1000);
 
-var targetObj;
-var selectedObj;
+var TARGETOBJ;
+var SELECTEDLIGHT = SPOTLIGHT;
+var SELECTEDOBJ;
 var MUSEUM;
 var CUBE;
 var SPHERE;
 var OCEAN;
 var SKYBOX;
 var GUI;
-var instruction = document.getElementById('instruction');
+var instruction = document.getElementById('object');
 var action = document.getElementById('action');
 var interactGroup = new THREE.Group();
 
@@ -56,106 +62,104 @@ var rayOrigin = new THREE.Vector3();
 
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.setClearColor(new THREE.Color(0xf2f2f2), 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 // LOAD MODEL
 var fbxLoader = new THREE.FBXLoader();
-fbxLoader.load('../assets/models/baotang/baotangbiendaomoi.fbx', (object) => {
+fbxLoader.load('../assets/models/baotang.fbx', (object) => {
     MUSEUM = object;
-    MUSEUM.position.set(-40, 80, -50);
+    MUSEUM.position.set(-40, 80, -40);
     MUSEUM.castShadow = true;
     MUSEUM.receiveShadow = true;
 
+    var count = 0;
     MUSEUM.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
+
+            child.userData = {
+                tag: 'museum',
+                name: 'museum ' + count++,
+                texture: 'StoneBrick',
+                parentPosition: child.parent.position
+            };
         }
     });
 
     scene.add(MUSEUM);
-
-    // LOAD GEOMETRY
-    fbxLoader.load('../assets/models/geometry/cube.fbx', (object) => {
-        CUBE = object;
-        CUBE.position.set(0, 30, 0);
-        CUBE.castShadow = true;
-        CUBE.receiveShadow = true;
-
-        CUBE.traverse((child) => {
-            if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-                child.material = new THREE.MeshPhongMaterial({
-                    shininess: 100
-                });
-                loadTexture('DisplacedGround', child);
-            }
-        });
-
-        scene.add(CUBE);
-
-        fbxLoader.load('../assets/models/geometry/sphere.fbx', (object) => {
-            SPHERE = object;
-            SPHERE.position.set(120, 30, 0);
-            SPHERE.castShadow = true;
-            SPHERE.receiveShadow = true;
-
-            SPHERE.traverse((child) => {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                    child.material = new THREE.MeshPhongMaterial({
-                        shininess: 100
-                    });
-                    loadTexture('TireTrack', child);
-                }
-            });
-
-            scene.add(SPHERE);
-        });
-    });
 });
+
+//     // LOAD GEOMETRY
+//     count = 0;
+//     fbxLoader.load('../assets/models/cube.fbx', (object) => {
+//         CUBE = object;
+//         CUBE.position.set(0, 30, 0);
+//         CUBE.castShadow = true;
+//         CUBE.receiveShadow = true;
+
+
+//         CUBE.traverse((child) => {
+//             if (child.isMesh) {
+//                 child.material = new THREE.MeshPhongMaterial({
+//                     shininess: 100
+//                 });
+//                 loadTexture('StoneBrick', child);
+
+//                 child.userData = {
+//                     tag: 'cube',
+//                     name: 'Cube ' + count++,
+//                     texture: 'StoneBrick',
+//                     parentPosition: child.parent.position
+//                 };
+
+//                 child.castShadow = true;
+//                 child.receiveShadow = true;
+//             }
+//         });
+
+//         interactGroup.add(CUBE);
+
+//         // scene.add(CUBE);
+//         count = 0;
+//         fbxLoader.load('../assets/models/geometry/sphere.fbx', (object) => {
+//             SPHERE = object;
+//             SPHERE.position.set(60, 30, 0);
+//             SPHERE.castShadow = true;
+//             SPHERE.receiveShadow = true;
+
+//             SPHERE.traverse((child) => {
+//                 if (child.isMesh) {
+//                     child.material = new THREE.MeshPhongMaterial({
+//                         shininess: 100
+//                     });
+//                     loadTexture('TireTrack', child);
+
+//                     child.userData = {
+//                         tag: 'sphere',
+//                         name: 'Sphere ' + count++,
+//                         texture: 'TireTrack',
+//                         parentPosition: child.parent.position
+//                     };
+
+//                     child.castShadow = true;
+//                     child.receiveShadow = true;
+//                 }
+//             });
+
+//             interactGroup.add(SPHERE);
+
+//             // scene.add(SPHERE);
+//         });
+//     });
+// });
 //
 
 
 //  LOAD GEOMETRY
-var textureColor = new THREE.TextureLoader().load('../assets/models/textures/TireTrack/color.jpg');
-var textureDisplace = new THREE.TextureLoader().load('../assets/models/textures/TireTrack/displace.tif');
-var textureBump = new THREE.TextureLoader().load('../assets/models/textures/TireTrack/normal.jpg');
 var video = document.getElementById('video');
-
-var box = new THREE.Mesh(new THREE.BoxBufferGeometry(30, 30, 30), new THREE.MeshLambertMaterial({
-    map: textureColor,
-    displacementMap: textureDisplace,
-    normalMap: textureBump
-}));
-box.material.color.setHex(0x00ff00);
-box.position.set(-60, 30, 0);
-box.castShadow = true;
-box.receiveShadow = true;
-box.userData = {
-    tag: 'box',
-    name: 'Khối hộp',
-    texture: 'TireTrack'
-};
-// scene.add(box);
-
-var sphere = new THREE.Mesh(new THREE.SphereBufferGeometry(30, 25, 25), new THREE.MeshPhongMaterial({
-    shininess: 100,
-    map: textureColor,
-    displacementMap: textureDisplace,
-    normalMap: textureBump
-}));
-sphere.position.set(60, 30, 0);
-sphere.castShadow = true;
-sphere.receiveShadow = true;
-sphere.userData = {
-    tag: 'sphere',
-    name: 'Khối cầu',
-    texture: 'TireTrack'
-};
-
 var videoTex = new THREE.VideoTexture(video);
 videoTex.minFilter = THREE.LinearFilter;
 videoTex.magFilter = THREE.LinearFilter;
@@ -169,21 +173,51 @@ plane.userData = {
     name: 'Mặt phẳng'
 };
 
-interactGroup.add(box);
-interactGroup.add(sphere);
 interactGroup.add(plane);
 scene.add(interactGroup);
 //
 
 // LOAD TEXTURES
 function loadTexture(textureName, object) {
-    var textureColor = new THREE.TextureLoader().load('../assets/models/textures/' + textureName + '/color.jpg');
-    var textureDisplace = new THREE.TextureLoader().load('../assets/models/textures/' + textureName + '/displace.tif');
-    var textureNormal = new THREE.TextureLoader().load('../assets/models/textures/' + textureName + '/normal.jpg');
+    var textureLoader = new THREE.TextureLoader();
 
-    object.material.map = textureColor;
-    object.material.displacementMap = textureDisplace;
-    object.material.normalMap = textureNormal;
+    if (THREE.Cache.enabled) {
+        var textureColor = THREE.Cache.get(textureName + 'Color');
+        var textureDisplace = THREE.Cache.get(textureName + 'Displace');
+        var textureNormal = THREE.Cache.get(textureName + 'Normal');
+
+        if (textureColor) {
+            object.material.map = textureColor;
+        } else {
+            textureLoader.load('../assets/models/textures/' + textureName + '/color.jpg', (texture) => {
+                THREE.Cache.add(textureName + 'Color', texture);
+                object.material.map = texture;
+            });
+        }
+
+        if (textureDisplace) {
+            object.material.displacementMap = textureDisplace;
+            object.material.displacementScale = 0;
+            object.material.displacementBias = 0;
+        } else {
+            textureLoader.load('../assets/models/textures/' + textureName + '/displace.jpg', (texture) => {
+                THREE.Cache.add(textureName + 'Displace', texture);
+                object.material.displacementMap = texture;
+                object.material.displacementScale = 0;
+                object.material.displacementBias = 0;
+            });
+        }
+
+        if (textureNormal) {
+            object.material.normalMap = textureNormal;
+        } else {
+            textureLoader.load('../assets/models/textures/' + textureName + '/normal.jpg', (texture) => {
+                THREE.Cache.add(textureName + 'Normal', texture);
+                object.material.normalMap = texture;
+            });
+        }
+    }
+
     object.userData.texture = textureName;
 }
 
@@ -206,8 +240,11 @@ function generateUI(targetObj) {
     var nameCtrl = GUI.add(params, 'name');
     nameCtrl.domElement.style.pointerEvents = 'none';
 
-    var colorCtrl = GUI.addColor(params, 'color');
-    var matCtrl = GUI.add(params, 'material', ['MeshBasicMaterial', 'MeshPhongMaterial', 'MeshLambertMaterial']).onChange((value) => {
+    GUI.addColor(params, 'color').onChange((value) => {
+        targetObj.material.color = value;
+    });
+
+    GUI.add(params, 'material', ['MeshBasicMaterial', 'MeshPhongMaterial', 'MeshLambertMaterial']).onChange((value) => {
         switch (value) {
             case 'MeshBasicMaterial':
                 targetObj.material = new THREE.MeshBasicMaterial();
@@ -243,8 +280,191 @@ function generateUI(targetObj) {
         });
     }
 
-    var texCtrl = GUI.add(params, 'texture', ['DisplacedGround', 'Marble', 'TireTrack']).onChange((value) => {
+    GUI.add(params, 'texture', ['StoneBrick', 'TireTrack']).onChange((value) => {
         loadTexture(value, targetObj);
+    });
+}
+
+function generateLightGUI(targetObj) {
+    var params = {
+        name: targetObj.type,
+        color: targetObj.color,
+        intensity: targetObj.intensity,
+        distance: targetObj.distance, // point, spot
+        decay: targetObj.decay, // point, spot
+        penumbra: targetObj.penumbra, // spot
+        angle: targetObj.angle, // spot
+        castShadow: targetObj.castShadow,
+        displayObj: null
+    };
+
+    GUI = new dat.GUI();
+
+    var distance, decay, penumbra, angle;
+    var nameCtrl = GUI.add(params, 'name');
+    nameCtrl.domElement.style.pointerEvents = 'none';
+
+    GUI.addColor(params, 'color').onChange((value) => {
+        targetObj.color = value;
+    });
+
+    GUI.add(params, 'intensity', 0, 2).onChange((value) => {
+        targetObj.intensity = value;
+    });
+
+    if (targetObj.type === 'SpotLight' || targetObj.type === 'PointLight') {
+        if (!distance && !decay) {
+            distance = GUI.add(params, 'distance', 0, 1000).onChange((value) => {
+                targetObj.distance = value;
+            });
+            decay = GUI.add(params, 'decay', 0, 2).onChange((value) => {
+                targetObj.decay = value;
+            });
+        }
+
+        if (targetObj.type === 'SpotLight') {
+            if (!penumbra && !angle) {
+                penumbra = GUI.add(params, 'penumbra', 0, 1).onChange((value) => {
+                    targetObj.penumbra = value;
+                });
+                angle = GUI.add(params, 'angle', 0, Math.PI / 2).onChange((value) => {
+                    targetObj.angle = value;
+                });
+            }
+        } else {
+            if (penumbra && angle) {
+                GUI.remove(penumbra);
+                GUI.remove(angle);
+                penumbra = null;
+                angle = null;
+            }
+        }
+    } else {
+        if (distance && decay) {
+            GUI.remove(distance);
+            GUI.remove(decay);
+            distance = null;
+            decay = null;
+
+            if (penumbra && angle) {
+                GUI.remove(penumbra);
+                GUI.remove(angle);
+                penumbra = null;
+                angle = null;
+            }
+        }
+    }
+
+    GUI.add(params, 'castShadow').onChange((value) => {
+        targetObj.castShadow = value;
+    });
+
+    GUI.add(params, 'displayObj', [null, 'Cube', 'Sphere']).onChange((value) => {
+        switch (value) {
+            case null:
+                if (SELECTEDOBJ) {
+                    interactGroup.remove(SELECTEDOBJ);
+                }
+                break;
+
+            case 'Cube':
+                if (SPHERE) {
+                    interactGroup.remove(SPHERE);
+                }
+
+                if (!CUBE) {
+                    CUBE = THREE.Cache.get('cube');
+
+                    if (!CUBE) {
+                        let count = 0;
+                        fbxLoader.load('../assets/models/cube.fbx', (object) => {
+                            CUBE = object;
+                            CUBE.position.set(0, 30, 0);
+                            CUBE.castShadow = true;
+                            CUBE.receiveShadow = true;
+
+
+                            CUBE.traverse((child) => {
+                                if (child.isMesh) {
+                                    child.material = new THREE.MeshPhongMaterial({
+                                        shininess: 100
+                                    });
+                                    loadTexture('StoneBrick', child);
+
+                                    child.userData = {
+                                        tag: 'cube',
+                                        name: 'Cube ' + count++,
+                                        texture: 'StoneBrick',
+                                        parentPosition: child.parent.position
+                                    };
+
+                                    child.castShadow = true;
+                                    child.receiveShadow = true;
+                                }
+                            });
+
+                            THREE.Cache.add('cube', CUBE);
+
+                            interactGroup.add(CUBE);
+                        });
+                    }
+                } else {
+                    interactGroup.add(CUBE);
+                }
+
+                SELECTEDOBJ = CUBE;
+
+                break;
+
+            case 'Sphere':
+                if (CUBE) {
+                    interactGroup.remove(CUBE);
+                }
+
+                if (!SPHERE) {
+                    SPHERE = THREE.Cache.get('sphere');
+
+                    if (!SPHERE) {
+
+                        let count = 0;
+                        fbxLoader.load('../assets/models/sphere.fbx', (object) => {
+                            SPHERE = object;
+                            SPHERE.position.set(0, 30, 0);
+                            SPHERE.castShadow = true;
+                            SPHERE.receiveShadow = true;
+
+                            SPHERE.traverse((child) => {
+                                if (child.isMesh) {
+                                    child.material = new THREE.MeshPhongMaterial({
+                                        shininess: 100
+                                    });
+                                    loadTexture('TireTrack', child);
+
+                                    child.userData = {
+                                        tag: 'sphere',
+                                        name: 'Sphere ' + count++,
+                                        texture: 'TireTrack',
+                                        parentPosition: child.parent.position
+                                    };
+
+                                    child.castShadow = true;
+                                    child.receiveShadow = true;
+                                }
+                            });
+
+                            THREE.Cache.add('sphere', SPHERE);
+
+                            interactGroup.add(SPHERE);
+                        });
+                    }
+                } else {
+                    interactGroup.add(SPHERE);
+                }
+
+                SELECTEDOBJ = SPHERE;
+
+                break;
+        }
     });
 }
 //
@@ -252,6 +472,8 @@ function generateUI(targetObj) {
 
 // FUNCTIONS
 function init() {
+    THREE.Cache.enabled = true;
+
     scene.add(pointerControls.getObject());
 
     var cubeMaterials = [
@@ -281,7 +503,6 @@ function init() {
         })
     ];
 
-    // var skyMaterial = new THREE.MultiMaterial(cubeMaterials);
     SKYBOX = new THREE.Mesh(new THREE.CubeGeometry(10000, 10000, 10000), cubeMaterials);
     scene.add(SKYBOX);
 
@@ -346,11 +567,36 @@ function init() {
                 canJump = false;
                 break;
 
-            case 69:
-                if (targetObj) {
-                    generateUI(targetObj);
-                    setControl(targetObj);
+            case 69: // E
+                if (TARGETOBJ) {
+                    SELECTEDOBJ = TARGETOBJ;
+                    instruction.setAttribute('style', 'display: none');
+                    GUI = null;
+                    generateUI(SELECTEDOBJ);
+                    setControl({
+                        x: 0,
+                        y: 0,
+                        z: SELECTEDOBJ.userData.parentPosition.z + 20
+                    }, SELECTEDOBJ.userData.parentPosition);
                 }
+                break;
+
+            case 76: // L
+                if (SELECTEDLIGHT) {
+                    GUI = null;
+                    generateLightGUI(SELECTEDLIGHT);
+                    setControl({
+                        x: 0,
+                        y: 0,
+                        z: 60
+                    }, new THREE.Vector3(0, 35, 0));
+                }
+                break;
+
+            case 79: // O
+                break;
+
+            case 80: // P
                 break;
         }
     };
@@ -379,6 +625,7 @@ function init() {
     document.addEventListener('keyup', onKeyUp, false);
     document.addEventListener('click', () => {
         if (pointerControls) {
+            prevTime = performance.now();
             camera.position.set(0, 0, 0);
             pointerControls.getObject().position.y = HEIGHT;
             pointerControls.lock();
@@ -386,37 +633,22 @@ function init() {
     });
 }
 
-function setControl(targetObj) {
-    var pos = pointerControls.getObject().position;
+function setControl(position, lookAt) {
+    // var pos = pointerControls.getObject().position;
     pointerControls.unlock();
     pointerControls = null;
 
     // tween camera to before object
-    var camPosition = {
-        x: 0,
-        y: 0,
-        z: targetObj.position.z + 50
-    };
-    camera.lookAt(targetObj.position);
     var tween = new TWEEN.Tween(camera.position);
-    tween.to(camPosition, 2000);
+    tween.to(position, 2000);
     tween.start();
-
-    // set control
-    // trackballControls = new THREE.TrackballControls(camera);
-    // trackballControls.rotateSpeed = 1.0;
-    // trackballControls.zoomSpeed = 1.2;
-    // trackballControls.panSpeed = 0.8;
-    // trackballControls.noZoom = false;
-    // trackballControls.noPan = false;
-    // trackballControls.staticMoving = true;
-    // trackballControls.dynamicDampingFactor = 0.3;
-    // trackballControls.keys = [65, 83, 68];
-    // trackballControls.addEventListener('change', render);
+    tween.onComplete(() => {
+        camera.lookAt(lookAt);
+    });
 }
 
 function rotateObj(targetObj) {
-    if (targetObj.geometry.type != 'PlaneGeometry') {
+    if (targetObj.geometry.type != 'PlaneGeometry' && !targetObj.userData.name.includes('museum')) {
         targetObj.rotation.y += 0.01;
     }
 }
@@ -426,22 +658,29 @@ function animate() {
 
     OCEAN.material.uniforms.time.value += 1.0 / 60.0;
 
-    if (targetObj) {
-        rotateObj(targetObj);
+    if (TARGETOBJ || SELECTEDLIGHT || SELECTEDOBJ) {
+        if (TARGETOBJ) {
+            rotateObj(TARGETOBJ);
+        } else if (SELECTEDOBJ) {
+            rotateObj(SELECTEDOBJ);
+        }
 
         if (GUI && GUI.closed) {
             GUI.destroy();
-            targetObj.rotation.y = 0;
-            targetObj = null;
             GUI = null;
 
-            pointerControls = oldControl;
-            // trackballControls = null;
-        }
-    }
+            if (TARGETOBJ) {
+                TARGETOBJ.rotation.y = 0;
+                TARGETOBJ = null;
+            }
 
-    if (trackballControls) {
-        trackballControls.update();
+            if (SELECTEDOBJ) {
+                SELECTEDOBJ.rotation.y = 0;
+                SELECTEDOBJ = null;
+            }
+
+            pointerControls = oldControl;
+        }
     }
 
     if (pointerControls && pointerControls.isLocked) {
@@ -449,16 +688,16 @@ function animate() {
         raycaster.near = 0;
         raycaster.far = 20;
 
-        var intersectObjects = raycaster.intersectObjects(interactGroup.children);
+        var intersectObjects = raycaster.intersectObjects(interactGroup.children, true);
 
         if (intersectObjects.length != 0) {
             for (var i = 0; i < intersectObjects.length; i++) {
-                targetObj = intersectObjects[i].object;
+                TARGETOBJ = intersectObjects[i].object;
                 instruction.setAttribute('style', '');
-                action.innerHTML = 'xem ' + targetObj.userData.name;
+                action.innerHTML = 'xem ' + TARGETOBJ.userData.name;
             }
         } else {
-            targetObj = null;
+            TARGETOBJ = null;
             instruction.setAttribute('style', 'display: none');
         }
 

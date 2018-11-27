@@ -8,21 +8,21 @@
 
         <script src="js/three.js"></script>
         <script src="js/controls/PointerLockControls.js"></script>
-        <script src="js/controls/TrackballControls.js"></script>
+        <!-- <script src="js/controls/TrackballControls.js"></script> -->
         <script src="js/libs/dat.gui.min.js"></script>
         <script src="js/libs/tween.js"></script>
         <script src="js/libs/inflate.min.js"></script>
-        <script src="js/loaders/OBJLoader.js"></script>
+        <!-- <script src="js/loaders/OBJLoader.js"></script> -->
         <script src="js/loaders/MTLLoader.js"></script>
         <script src="js/loaders/FBXLoader.js"></script>
         <script src="js/misc/Water.js"></script>
         <script src="js/misc/Sky.js"></script>
-        <script src="js/shaders/CopyShader.js"></script>
+        <!-- <script src="js/shaders/CopyShader.js"></script>
         <script src="js/shaders/FXAAShader.js"></script>
         <script src="js/postprocessing/EffectComposer.js"></script>
         <script src="js/postprocessing/RenderPass.js"></script>
         <script src="js/postprocessing/ShaderPass.js"></script>
-        <script src="js/postprocessing/OutlinePass.js"></script>
+        <script src="js/postprocessing/OutlinePass.js"></script> -->
 
         <link rel="stylesheet" href="css/style.css">
         <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
@@ -31,8 +31,17 @@
     </head>
 
     <body>
-        <div id="instruction">
-            Nhấn <span id="key">&nbsp;E&nbsp;</span> để <span id="action"></span>
+        <div id="object" class="instruction">
+            Nhấn <span class="key">&nbsp;E&nbsp;</span> để <span id="action"></span>
+        </div>
+
+        <div id="light-obj" class="instruction">
+            <p>
+                <span class="key">&nbsp;L&nbsp;</span> điều khiển ánh sáng
+            </p>
+            <p>
+                <span class="key">&nbsp;O&nbsp;</span> điều khiển vật thể
+            </p>
         </div>
 
         <video controls loop autoplay id="video" style="display: none">
