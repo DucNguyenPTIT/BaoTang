@@ -1,3 +1,4 @@
+THREE.Cache.enabled = true;
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 var renderer = new THREE.WebGLRenderer({
@@ -9,15 +10,24 @@ var ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
 var hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 1);
 var direcLight = new THREE.DirectionalLight(0xffffff, 0.8);
 
-var POINTLIGHT = new THREE.PointLight(0xccff99, 1.8, 1000, 2);
-var DIRECTLIGHT = new THREE.DirectionalLight(0xccff99, 1.8);
-var SPOTLIGHT = new THREE.SpotLight(0xccff99, 1.8, 1000, Math.PI / 6, 0.25, 2);
+var POINTLIGHT = new THREE.PointLight(0xccff99, 1, 1000, 2);
+var DIRECTLIGHT = new THREE.DirectionalLight(0xccff99, 1);
+var SPOTLIGHT = new THREE.SpotLight(new THREE.Color(204, 255, 153), 1, 200, Math.PI / 6, 0.05, 2);
 
 SPOTLIGHT.position.set(0, 80, 0);
 SPOTLIGHT.castShadow = true;
+SPOTLIGHT.shadow.camera.near = 10;
+SPOTLIGHT.shadow.camera.far = 1000;
+
 DIRECTLIGHT.position.set(0, 80, 0);
 DIRECTLIGHT.castShadow = true;
+DIRECTLIGHT.shadow.camera.near = 10;
+DIRECTLIGHT.shadow.camera.far = 1000;
+
 POINTLIGHT.position.set(0, 80, 0);
+POINTLIGHT.castShadow = true;
+POINTLIGHT.shadow.camera.near = 10;
+POINTLIGHT.shadow.camera.far = 1000;
 
 direcLight.position.set(-500, 5000, 2000);
 direcLight.castShadow = true;
@@ -48,6 +58,7 @@ var SPHERE;
 var OCEAN;
 var SKYBOX;
 var GUI;
+var FLOOR;
 var instruction = document.getElementById('object');
 var action = document.getElementById('action');
 var interactGroup = new THREE.Group();
@@ -67,6 +78,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 // LOAD MODEL
+var count = 0;
 var fbxLoader = new THREE.FBXLoader();
 fbxLoader.load('../assets/models/baotang.fbx', (object) => {
     MUSEUM = object;
@@ -76,87 +88,86 @@ fbxLoader.load('../assets/models/baotang.fbx', (object) => {
 
     var count = 0;
     MUSEUM.traverse((child) => {
-        if (child.isMesh) {
+        if (child.isMesh && count == 58) {
             child.castShadow = true;
             child.receiveShadow = true;
+            child.material = new MeshPhongMaterial({
+                shininess: 100
+            });
 
             child.userData = {
                 tag: 'museum',
-                name: 'museum ' + count++,
-                texture: 'StoneBrick',
+                name: 'museum ' + count,
+                texture: null,
                 parentPosition: child.parent.position
             };
+
+            FLOOR = child;
         }
     });
 
     scene.add(MUSEUM);
 });
 
-//     // LOAD GEOMETRY
-//     count = 0;
-//     fbxLoader.load('../assets/models/cube.fbx', (object) => {
-//         CUBE = object;
-//         CUBE.position.set(0, 30, 0);
-//         CUBE.castShadow = true;
-//         CUBE.receiveShadow = true;
+count = 0;
+fbxLoader.load('../assets/models/sphere.fbx', (object) => {
+    SPHERE = object;
+    SPHERE.position.set(0, 30, 0);
+    SPHERE.castShadow = true;
+    SPHERE.receiveShadow = true;
+
+    SPHERE.traverse((child) => {
+        if (child.isMesh) {
+            child.material = new THREE.MeshPhongMaterial({
+                shininess: 100
+            });
+            loadTexture('TireTrack', child);
+
+            child.userData = {
+                tag: 'sphere',
+                name: 'Sphere ' + count++,
+                texture: 'TireTrack',
+                parentPosition: child.parent.position
+            };
+
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
+
+    THREE.Cache.add('sphere', SPHERE);
+});
+
+count = 0;
+fbxLoader.load('../assets/models/cube.fbx', (object) => {
+    CUBE = object;
+    CUBE.position.set(0, 30, 0);
+    CUBE.castShadow = true;
+    CUBE.receiveShadow = true;
 
 
-//         CUBE.traverse((child) => {
-//             if (child.isMesh) {
-//                 child.material = new THREE.MeshPhongMaterial({
-//                     shininess: 100
-//                 });
-//                 loadTexture('StoneBrick', child);
+    CUBE.traverse((child) => {
+        if (child.isMesh) {
+            child.material = new THREE.MeshPhongMaterial({
+                shininess: 100
+            });
+            loadTexture('StoneBrick', child);
 
-//                 child.userData = {
-//                     tag: 'cube',
-//                     name: 'Cube ' + count++,
-//                     texture: 'StoneBrick',
-//                     parentPosition: child.parent.position
-//                 };
+            child.userData = {
+                tag: 'cube',
+                name: 'Cube ' + count++,
+                texture: 'StoneBrick',
+                parentPosition: child.parent.position
+            };
 
-//                 child.castShadow = true;
-//                 child.receiveShadow = true;
-//             }
-//         });
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
 
-//         interactGroup.add(CUBE);
-
-//         // scene.add(CUBE);
-//         count = 0;
-//         fbxLoader.load('../assets/models/geometry/sphere.fbx', (object) => {
-//             SPHERE = object;
-//             SPHERE.position.set(60, 30, 0);
-//             SPHERE.castShadow = true;
-//             SPHERE.receiveShadow = true;
-
-//             SPHERE.traverse((child) => {
-//                 if (child.isMesh) {
-//                     child.material = new THREE.MeshPhongMaterial({
-//                         shininess: 100
-//                     });
-//                     loadTexture('TireTrack', child);
-
-//                     child.userData = {
-//                         tag: 'sphere',
-//                         name: 'Sphere ' + count++,
-//                         texture: 'TireTrack',
-//                         parentPosition: child.parent.position
-//                     };
-
-//                     child.castShadow = true;
-//                     child.receiveShadow = true;
-//                 }
-//             });
-
-//             interactGroup.add(SPHERE);
-
-//             // scene.add(SPHERE);
-//         });
-//     });
-// });
+    THREE.Cache.add('cube', CUBE);
+});
 //
-
 
 //  LOAD GEOMETRY
 var video = document.getElementById('video');
@@ -357,6 +368,7 @@ function generateLightGUI(targetObj) {
 
     GUI.add(params, 'castShadow').onChange((value) => {
         targetObj.castShadow = value;
+        render();
     });
 
     GUI.add(params, 'displayObj', [null, 'Cube', 'Sphere']).onChange((value) => {
@@ -372,47 +384,8 @@ function generateLightGUI(targetObj) {
                     interactGroup.remove(SPHERE);
                 }
 
-                if (!CUBE) {
-                    CUBE = THREE.Cache.get('cube');
-
-                    if (!CUBE) {
-                        let count = 0;
-                        fbxLoader.load('../assets/models/cube.fbx', (object) => {
-                            CUBE = object;
-                            CUBE.position.set(0, 30, 0);
-                            CUBE.castShadow = true;
-                            CUBE.receiveShadow = true;
-
-
-                            CUBE.traverse((child) => {
-                                if (child.isMesh) {
-                                    child.material = new THREE.MeshPhongMaterial({
-                                        shininess: 100
-                                    });
-                                    loadTexture('StoneBrick', child);
-
-                                    child.userData = {
-                                        tag: 'cube',
-                                        name: 'Cube ' + count++,
-                                        texture: 'StoneBrick',
-                                        parentPosition: child.parent.position
-                                    };
-
-                                    child.castShadow = true;
-                                    child.receiveShadow = true;
-                                }
-                            });
-
-                            THREE.Cache.add('cube', CUBE);
-
-                            interactGroup.add(CUBE);
-                        });
-                    }
-                } else {
-                    interactGroup.add(CUBE);
-                }
-
-                SELECTEDOBJ = CUBE;
+                SELECTEDOBJ = THREE.Cache.get('cube');
+                interactGroup.add(SELECTEDOBJ);
 
                 break;
 
@@ -421,59 +394,44 @@ function generateLightGUI(targetObj) {
                     interactGroup.remove(CUBE);
                 }
 
-                if (!SPHERE) {
-                    SPHERE = THREE.Cache.get('sphere');
-
-                    if (!SPHERE) {
-
-                        let count = 0;
-                        fbxLoader.load('../assets/models/sphere.fbx', (object) => {
-                            SPHERE = object;
-                            SPHERE.position.set(0, 30, 0);
-                            SPHERE.castShadow = true;
-                            SPHERE.receiveShadow = true;
-
-                            SPHERE.traverse((child) => {
-                                if (child.isMesh) {
-                                    child.material = new THREE.MeshPhongMaterial({
-                                        shininess: 100
-                                    });
-                                    loadTexture('TireTrack', child);
-
-                                    child.userData = {
-                                        tag: 'sphere',
-                                        name: 'Sphere ' + count++,
-                                        texture: 'TireTrack',
-                                        parentPosition: child.parent.position
-                                    };
-
-                                    child.castShadow = true;
-                                    child.receiveShadow = true;
-                                }
-                            });
-
-                            THREE.Cache.add('sphere', SPHERE);
-
-                            interactGroup.add(SPHERE);
-                        });
-                    }
-                } else {
-                    interactGroup.add(SPHERE);
-                }
-
-                SELECTEDOBJ = SPHERE;
+                SELECTEDOBJ = THREE.Cache.get('sphere');
+                interactGroup.add(SELECTEDOBJ);
 
                 break;
         }
+
+        render();
     });
+}
+
+function generateFloorUI(floor) {
+    var params = {
+        material: floor.material,
+        texture: floor.userData.texture
+    };
+
+    GUI = new dat.GUI();
+    GUI.add(params, 'material', {
+        MeshNormalMaterial: new THREE.MeshNormalMaterial(),
+        MeshPhongMaterial: new THREE.MeshPhongMaterial({
+            shininess: 100
+        }),
+        MeshLambertMaterial: new THREE.MeshLambertMaterial()
+    }).onChange((value) => {
+        floor.material = value;
+
+        if (floor.userData.texture) {
+            loadTexture(floor.userData.texture);
+        }
+    });
+
+    GUI.add(params, 'texture', ['']);
 }
 //
 
 
 // FUNCTIONS
 function init() {
-    THREE.Cache.enabled = true;
-
     scene.add(pointerControls.getObject());
 
     var cubeMaterials = [
@@ -552,11 +510,11 @@ function init() {
                 moveLeft = true;
                 break;
 
-            case 83:
+            case 83: // S
                 moveDown = true;
                 break;
 
-            case 68:
+            case 68: // D
                 moveRight = true;
                 break;
 
@@ -576,9 +534,13 @@ function init() {
                     setControl({
                         x: 0,
                         y: 0,
-                        z: SELECTEDOBJ.userData.parentPosition.z + 20
+                        z: SELECTEDOBJ.userData.parentPosition.z
                     }, SELECTEDOBJ.userData.parentPosition);
                 }
+                break;
+
+            case 70: // F
+
                 break;
 
             case 76: // L
@@ -591,9 +553,6 @@ function init() {
                         z: 60
                     }, new THREE.Vector3(0, 35, 0));
                 }
-                break;
-
-            case 79: // O
                 break;
 
             case 80: // P
@@ -634,7 +593,6 @@ function init() {
 }
 
 function setControl(position, lookAt) {
-    // var pos = pointerControls.getObject().position;
     pointerControls.unlock();
     pointerControls = null;
 
@@ -648,7 +606,9 @@ function setControl(position, lookAt) {
 }
 
 function rotateObj(targetObj) {
-    if (targetObj.geometry.type != 'PlaneGeometry' && !targetObj.userData.name.includes('museum')) {
+    if (targetObj.type === 'Group') {
+        targetObj.children[0].rotation.y += 0.01;
+    } else if (targetObj.geometry.type != 'PlaneGeometry' && !targetObj.userData.name.includes('museum')) {
         targetObj.rotation.y += 0.01;
     }
 }
