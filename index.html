@@ -13,7 +13,7 @@
         <script src="js/libs/tween.js"></script>
         <script src="js/libs/inflate.min.js"></script>
         <!-- <script src="js/loaders/OBJLoader.js"></script> -->
-        <script src="js/loaders/MTLLoader.js"></script>
+        <!-- <script src="js/loaders/MTLLoader.js"></script> -->
         <script src="js/loaders/FBXLoader.js"></script>
         <script src="js/misc/Water.js"></script>
         <script src="js/misc/Sky.js"></script>
@@ -25,8 +25,8 @@
         <script src="js/postprocessing/OutlinePass.js"></script> -->
 
         <link rel="stylesheet" href="css/style.css">
-        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-        <link rel="icon" href="favicon.ico" type="image/x-icon">
+        <link rel="shortcut icon" href="favicon3.ico" type="image/x-icon">
+        <link rel="icon" href="favicon3.ico" type="image/x-icon">
         <title>Bảo tàng số</title>
     </head>
 
@@ -38,13 +38,18 @@
         <div id="light-obj" class="instruction">
             <p>
                 <span class="key">&nbsp;L&nbsp;</span> điều khiển ánh sáng
+                <ul class="option">
+                    <li>P: Ánh sáng điểm</li>
+                    <li>S: Ánh sáng tiêu điểm</li>
+                    <li>D: Ánh sáng đẳng hướng</li>
+                </ul>
             </p>
             <p>
-                <span class="key">&nbsp;F&nbsp;</span> điều khiển sàn nhà
+                <span class="key">&nbsp;O&nbsp;</span> điều khiển vật thể
             </p>
         </div>
 
-        <video controls loop autoplay id="video" style="display: none">
+        <video controls loop id="video" style="display: none">
             <source src="assets/videos/video.mp4" type="video/mp4">
         </video>
         <script src="js/script.js"></script>

@@ -54,3 +54,11 @@ span {
 #action {
     color: yellow;
 }
+
+.option {
+    width: 70%;
+    list-style: none;
+    font-size: 17px;
+    margin: auto;
+    text-align: left;
+}

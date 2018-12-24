@@ -1,6 +1,8 @@
 THREE.Cache.enabled = true;
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+var listener = new THREE.AudioListener();
+camera.add(listener);
 var renderer = new THREE.WebGLRenderer({
     antialias: true
 });
@@ -12,7 +14,7 @@ var direcLight = new THREE.DirectionalLight(0xffffff, 0.8);
 
 var POINTLIGHT = new THREE.PointLight(0xccff99, 1, 1000, 2);
 var DIRECTLIGHT = new THREE.DirectionalLight(0xccff99, 1);
-var SPOTLIGHT = new THREE.SpotLight(new THREE.Color(204, 255, 153), 1, 200, Math.PI / 6, 0.05, 2);
+var SPOTLIGHT = new THREE.SpotLight(new THREE.Color(204, 255, 153), 0.05, 200, Math.PI / 6, 0.05, 2);
 
 SPOTLIGHT.position.set(0, 80, 0);
 SPOTLIGHT.castShadow = true;
@@ -47,10 +49,9 @@ var canJump = false;
 const GRAVITY = 9.8;
 const MASS = 100;
 const HEIGHT = 35;
-const AXIS_HELPER = new THREE.AxisHelper(1000);
 
 var TARGETOBJ;
-var SELECTEDLIGHT = SPOTLIGHT;
+var SELECTEDLIGHT;
 var SELECTEDOBJ;
 var MUSEUM;
 var CUBE;
@@ -62,8 +63,6 @@ var FLOOR;
 var instruction = document.getElementById('object');
 var action = document.getElementById('action');
 var interactGroup = new THREE.Group();
-
-scene.add(AXIS_HELPER);
 
 var prevTime = performance.now();
 var velocity = new THREE.Vector3();
@@ -86,25 +85,7 @@ fbxLoader.load('../assets/models/baotang.fbx', (object) => {
     MUSEUM.castShadow = true;
     MUSEUM.receiveShadow = true;
 
-    var count = 0;
-    MUSEUM.traverse((child) => {
-        if (child.isMesh && count == 58) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-            child.material = new MeshPhongMaterial({
-                shininess: 100
-            });
-
-            child.userData = {
-                tag: 'museum',
-                name: 'museum ' + count,
-                texture: null,
-                parentPosition: child.parent.position
-            };
-
-            FLOOR = child;
-        }
-    });
+    FLOOR = MUSEUM.children[3];
 
     scene.add(MUSEUM);
 });
@@ -169,20 +150,31 @@ fbxLoader.load('../assets/models/cube.fbx', (object) => {
 });
 //
 
-//  LOAD GEOMETRY
+//  LOAD MEDIA
 var video = document.getElementById('video');
 var videoTex = new THREE.VideoTexture(video);
 videoTex.minFilter = THREE.LinearFilter;
 videoTex.magFilter = THREE.LinearFilter;
 videoTex.format = THREE.RGBFormat;
+
+var sound = new THREE.PositionalAudio(listener);
+var audioLoader = new THREE.AudioLoader().load('../assets/videos/audio.mp3', (buffer) => {
+    sound.setBuffer(buffer);
+    sound.setRefDistance(20);
+    sound.setLoop(true);
+    sound.play();
+});
+
+
 var plane = new THREE.Mesh(new THREE.PlaneGeometry(80, 60), new THREE.MeshBasicMaterial({
     map: videoTex
 }));
 plane.position.set(0, 30, -50);
 plane.userData = {
-    tag: 'plane',
-    name: 'Mặt phẳng'
+    tag: 'video',
+    name: 'Video'
 };
+plane.add(sound);
 
 interactGroup.add(plane);
 scene.add(interactGroup);
@@ -404,28 +396,22 @@ function generateLightGUI(targetObj) {
     });
 }
 
-function generateFloorUI(floor) {
+function generateVideoUI(object) {
     var params = {
-        material: floor.material,
-        texture: floor.userData.texture
+        play: () => {
+            video.play();
+            console.log('play');
+        },
+
+        pause: () => {
+            video.pause();
+            console.log('pause');
+        }
     };
 
     GUI = new dat.GUI();
-    GUI.add(params, 'material', {
-        MeshNormalMaterial: new THREE.MeshNormalMaterial(),
-        MeshPhongMaterial: new THREE.MeshPhongMaterial({
-            shininess: 100
-        }),
-        MeshLambertMaterial: new THREE.MeshLambertMaterial()
-    }).onChange((value) => {
-        floor.material = value;
-
-        if (floor.userData.texture) {
-            loadTexture(floor.userData.texture);
-        }
-    });
-
-    GUI.add(params, 'texture', ['']);
+    GUI.add(params, 'play');
+    GUI.add(params, 'pause');
 }
 //
 
@@ -512,13 +498,53 @@ function init() {
 
             case 83: // S
                 moveDown = true;
+
+                if (SELECTEDLIGHT) {
+                    scene.add(SPOTLIGHT);
+                    SELECTEDLIGHT = SPOTLIGHT;
+                    scene.remove(DIRECTLIGHT);
+                    scene.remove(POINTLIGHT);
+                    GUI.destroy();
+                    GUI = null;
+                    generateLightGUI(SELECTEDLIGHT);
+                }
+
+                break;
+
+            case 67: // C
+                if (SELECTEDOBJ) {
+                    interactGroup.remove(SELECTEDOBJ);
+
+                    SELECTEDOBJ = THREE.Cache.get('cube');
+                    interactGroup.add(SELECTEDOBJ);
+                }
+                break;
+
+            case 71:
+                if (SELECTEDOBJ) {
+                    interactGroup.remove(SELECTEDOBJ);
+
+                    SELECTEDOBJ = THREE.Cache.get('sphere');
+                    interactGroup.add(SELECTEDOBJ);
+                }
                 break;
 
             case 68: // D
                 moveRight = true;
+
+                if (SELECTEDLIGHT) {
+                    scene.add(DIRECTLIGHT);
+                    SELECTEDLIGHT = DIRECTLIGHT;
+                    scene.remove(SPOTLIGHT);
+                    scene.remove(POINTLIGHT);
+                    GUI.destroy();
+                    GUI = null;
+                    generateLightGUI(SELECTEDLIGHT);
+                }
+
                 break;
 
-            case 32:
+            case 32: // Space
                 if (canJump) {
                     velocity.y += 350;
                 }
@@ -530,32 +556,55 @@ function init() {
                     SELECTEDOBJ = TARGETOBJ;
                     instruction.setAttribute('style', 'display: none');
                     GUI = null;
-                    generateUI(SELECTEDOBJ);
-                    setControl({
-                        x: 0,
-                        y: 0,
-                        z: SELECTEDOBJ.userData.parentPosition.z
-                    }, SELECTEDOBJ.userData.parentPosition);
+                    if (SELECTEDOBJ.userData.tag == 'video') {
+                        generateVideoUI(SELECTEDOBJ);
+                        setControl({
+                            x: 0,
+                            y: 0,
+                            z: 20
+                        }, SELECTEDOBJ.position);
+                    } else {
+                        generateUI(SELECTEDOBJ);
+                        setControl({
+                            x: 0,
+                            y: 0,
+                            z: SELECTEDOBJ.userData.parentPosition.z
+                        }, SELECTEDOBJ.userData.parentPosition);
+                    }
                 }
                 break;
 
-            case 70: // F
-
+            case 79: // O
+                if (!SELECTEDOBJ) {
+                    SELECTEDOBJ = THREE.Cache.get('cube');
+                    interactGroup.add(SELECTEDOBJ);
+                }
                 break;
 
             case 76: // L
-                if (SELECTEDLIGHT) {
-                    GUI = null;
-                    generateLightGUI(SELECTEDLIGHT);
-                    setControl({
-                        x: 0,
-                        y: 0,
-                        z: 60
-                    }, new THREE.Vector3(0, 35, 0));
+                if (!SELECTEDLIGHT) {
+                    SELECTEDLIGHT = SPOTLIGHT;
                 }
+
+                GUI = null;
+                generateLightGUI(SELECTEDLIGHT);
+                setControl({
+                    x: 0,
+                    y: 0,
+                    z: 60
+                }, new THREE.Vector3(0, 35, 0));
                 break;
 
             case 80: // P
+                if (SELECTEDLIGHT) {
+                    scene.add(POINTLIGHT);
+                    SELECTEDLIGHT = POINTLIGHT;
+                    scene.remove(DIRECTLIGHT);
+                    scene.remove(SPOTLIGHT);
+                    GUI.destroy();
+                    GUI = null;
+                    generateLightGUI(SELECTEDLIGHT);
+                }
                 break;
         }
     };
@@ -583,6 +632,8 @@ function init() {
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
     document.addEventListener('click', () => {
+        video.play();
+        video.muted = true;
         if (pointerControls) {
             prevTime = performance.now();
             camera.position.set(0, 0, 0);
@@ -639,6 +690,7 @@ function animate() {
                 SELECTEDOBJ = null;
             }
 
+            SELECTEDLIGHT = null;
             pointerControls = oldControl;
         }
     }
