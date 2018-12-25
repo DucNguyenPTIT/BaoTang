@@ -60,6 +60,7 @@ var OCEAN;
 var SKYBOX;
 var GUI;
 var FLOOR;
+var sound = new THREE.PositionalAudio(listener);
 var instruction = document.getElementById('object');
 var action = document.getElementById('action');
 var interactGroup = new THREE.Group();
@@ -157,13 +158,13 @@ videoTex.minFilter = THREE.LinearFilter;
 videoTex.magFilter = THREE.LinearFilter;
 videoTex.format = THREE.RGBFormat;
 
-var sound = new THREE.PositionalAudio(listener);
-var audioLoader = new THREE.AudioLoader().load('../assets/videos/audio.mp3', (buffer) => {
-    sound.setBuffer(buffer);
-    sound.setRefDistance(20);
-    sound.setLoop(true);
-    sound.play();
-});
+// var sound = new THREE.PositionalAudio(listener);
+// var audioLoader = new THREE.AudioLoader().load('../assets/videos/audio.mp3', (buffer) => {
+//     sound.setBuffer(buffer);
+//     sound.setRefDistance(20);
+//     sound.setLoop(true);
+//     sound.play();
+// });
 
 
 var plane = new THREE.Mesh(new THREE.PlaneGeometry(80, 60), new THREE.MeshBasicMaterial({
@@ -512,21 +513,19 @@ function init() {
                 break;
 
             case 67: // C
-                if (SELECTEDOBJ) {
-                    interactGroup.remove(SELECTEDOBJ);
-
-                    SELECTEDOBJ = THREE.Cache.get('cube');
-                    interactGroup.add(SELECTEDOBJ);
+                if (SPHERE) {
+                    interactGroup.remove(SPHERE);
                 }
+
+                interactGroup.add(CUBE);
                 break;
 
-            case 71:
-                if (SELECTEDOBJ) {
-                    interactGroup.remove(SELECTEDOBJ);
-
-                    SELECTEDOBJ = THREE.Cache.get('sphere');
-                    interactGroup.add(SELECTEDOBJ);
+            case 71: // G
+                if (CUBE) {
+                    interactGroup.remove(CUBE);
                 }
+
+                interactGroup.add(SPHERE);
                 break;
 
             case 68: // D
@@ -575,13 +574,14 @@ function init() {
                 break;
 
             case 79: // O
-                if (!SELECTEDOBJ) {
-                    SELECTEDOBJ = THREE.Cache.get('cube');
-                    interactGroup.add(SELECTEDOBJ);
-                }
+                interactGroup.remove(SPHERE);
+                interactGroup.remove(CUBE);
+                interactGroup.add(CUBE);
                 break;
 
             case 76: // L
+                TARGETOBJ = null;
+                instruction.setAttribute('style', 'display: none');
                 if (!SELECTEDLIGHT) {
                     SELECTEDLIGHT = SPOTLIGHT;
                 }
@@ -634,6 +634,14 @@ function init() {
     document.addEventListener('click', () => {
         video.play();
         video.muted = true;
+
+        var audioLoader = new THREE.AudioLoader().load('../assets/videos/audio.mp3', (buffer) => {
+            sound.setBuffer(buffer);
+            sound.setRefDistance(20);
+            sound.setLoop(true);
+            sound.play();
+        });
+
         if (pointerControls) {
             prevTime = performance.now();
             camera.position.set(0, 0, 0);
