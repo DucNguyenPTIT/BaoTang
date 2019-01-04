@@ -5,8 +5,18 @@
 ```bash
 npm install three
 ```
+## Usage:
+```
+import * as three from 'three';
+```
+or
+```
+var three = import('three')
+```
+Check out JavaScript import statement for more detail
 
-## Install typings (for IntelliSense)
+
+## Install typings (for IntelliSense - optional)
 
 ```bash
 npm install typings
